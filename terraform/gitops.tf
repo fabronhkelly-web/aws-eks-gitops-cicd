@@ -28,6 +28,18 @@ data "aws_iam_openid_connect_provider" "github" {
 locals {
   github_oidc_provider_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
   github_repo_url          = "https://github.com/${var.github_repository}.git"
+
+  github_owner = split("/", var.github_repository)[0]
+  github_repo  = split("/", var.github_repository)[1]
+
+  # GitHub sends the OIDC subject in one of two formats, depending on account settings:
+  #   classic:       repo:<owner>/<repo>:ref:refs/heads/<branch>
+  #   immutable IDs: repo:<owner>@<owner-id>/<repo>@<repo-id>:ref:refs/heads/<branch>
+  # Both are accepted, and both stay pinned to this repo and branch.
+  github_oidc_subjects = [
+    "repo:${local.github_owner}/${local.github_repo}:ref:refs/heads/${var.gitops_branch}",
+    "repo:${local.github_owner}@*/${local.github_repo}@*:ref:refs/heads/${var.gitops_branch}",
+  ]
 }
 
 resource "aws_iam_role" "github_actions" {
@@ -43,7 +55,9 @@ resource "aws_iam_role" "github_actions" {
       Condition = {
         StringEquals = {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-          "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:ref:refs/heads/${var.gitops_branch}"
+        }
+        StringLike = {
+          "token.actions.githubusercontent.com:sub" = local.github_oidc_subjects
         }
       }
     }]
