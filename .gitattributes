@@ -1,0 +1,4 @@
+# Keep Unix line endings everywhere (Terraform heredocs, shell scripts, YAML)
+* text=auto eol=lf
+*.png binary
+*.jpg binary

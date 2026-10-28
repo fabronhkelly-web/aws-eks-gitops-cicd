@@ -18,3 +18,13 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+
+# Local, per-machine settings
+.local-env.sh
+
+# Never commit AWS credential downloads
+*credentials*.csv
+*accessKeys*.csv
+
+# Saved Terraform plans can contain sensitive values
+**/tfplan

@@ -1,4 +1,7 @@
-"""Minimal "Hello, World!" web application for Tech Challenge 2."""
+"""Minimal "Hello, World!" web application for Tech Challenge 2.
+
+Deployed by GitHub Actions (CI) and Argo CD (CD) on the gitops branch.
+"""
 import os
 import socket
 
