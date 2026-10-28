@@ -19,6 +19,14 @@ module "eks" {
     kube-proxy = {}
     vpc-cni = {
       before_compute = true
+      # Prefix delegation hands each ENI slot a /28 instead of a single IP.
+      # Without it a t3.small can only run 11 pods, and the add-ons alone use 7.
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
   }
 
@@ -37,6 +45,22 @@ module "eks" {
       labels = {
         workload = "general"
       }
+
+      # Raise the per-node pod limit to match prefix delegation. 20 leaves
+      # headroom for add-ons, 3 app pods and load-test pods while keeping the
+      # kubelet's memory reservation (11 x maxPods + 255Mi) modest on 2 GiB.
+      cloudinit_pre_nodeadm = [{
+        content_type = "application/node.eks.aws"
+        content      = <<-EOT
+          ---
+          apiVersion: node.eks.aws/v1alpha1
+          kind: NodeConfig
+          spec:
+            kubelet:
+              config:
+                maxPods: 20
+        EOT
+      }]
     }
   }
 

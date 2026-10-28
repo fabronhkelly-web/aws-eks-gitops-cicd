@@ -36,11 +36,12 @@ topologySpread:
 #   node 1 also runs the add-ons (~425m)    -> ~1505m free, still fits 3
 # When the HPA wants a 4th pod per node, it goes Pending and the Cluster
 # Autoscaler adds a node (up to 4). The HPA also measures utilisation
-# against these requests (50% of 475m CPU, 50% of 256Mi memory).
+# against these requests (50% of 475m CPU, 50% of 192Mi memory).
+# gunicorn idles at ~50Mi, so the memory target only fires under real load.
 resources:
   requests:
     cpu: 475m
-    memory: 256Mi
+    memory: 192Mi
   limits:
     cpu: "1"
     memory: 384Mi

@@ -189,6 +189,7 @@ The URL is also shown on each successful Jenkins build. Paste it at the top of t
 
 - **1 node always on:** node group `min_size = 1`. **Up to 4:** `max_size = 4`. `desired_size` belongs to the Cluster Autoscaler after the first apply (the Terraform module ignores later changes to it).
 - **1 pod per node, up to 3:** the HPA starts at 1 replica on the 1 node. `topologySpreadConstraints` (`maxSkew: 1` across `kubernetes.io/hostname`) keeps the per-node count even. A t3.small has about 1930m allocatable CPU, and each app pod requests **475m**, so **3 fit on a node and a 4th does not**. That holds even on the first node, which also runs the cluster add-ons. When the HPA wants pod #4, it goes Pending and the Cluster Autoscaler adds a node. At most 4 nodes × 3 pods = **12 replicas**, which is `maxReplicas`.
+- **Pod density:** the VPC CNI runs with prefix delegation and nodes allow 20 pods. Without that, a t3.small is limited to 11 pod IPs, and the add-ons alone use 7.
 - **50% CPU or 50% memory:** the HPA has two `Resource` metrics. Kubernetes computes the replica count each metric needs and uses the larger one, so whichever crosses 50% first drives scaling.
 - **Scale-down:** the HPA waits 5 minutes before removing pods. The Cluster Autoscaler removes a node after it has been under 50% utilised for 5 minutes, then the cluster settles back to 1 node.
 
@@ -215,7 +216,7 @@ You'll see CPU climb past 50%, replicas go up, pods go Pending, new t3.small nod
 | `versions.tf` | Provider pins (AWS 5.x, Helm 2.x, Kubernetes 2.x) | Has a commented S3 backend block. Turn it on for shared, locked state |
 | `providers.tf` | Provider config, AZ lookup, common tags | Helm and Kubernetes providers log in with `aws eks get-token`, so no kubeconfig file is needed |
 | `vpc.tf` | VPC across 2 AZs: 2 public + 2 private subnets, 1 NAT gateway | Subnets carry the `kubernetes.io/role/elb` and `internal-elb` tags the LB Controller uses to find them |
-| `eks.tf` | EKS cluster (`terraform-aws-modules/eks` v20), managed node group (AL2023, t3.small, 1–4), core add-ons, access entry for Jenkins, app namespace | Uses EKS **access entries** (API auth mode) instead of the old `aws-auth` ConfigMap. Whoever runs `apply` becomes cluster admin |
+| `eks.tf` | EKS cluster (`terraform-aws-modules/eks` v20), managed node group (AL2023, t3.small, 1–4, `maxPods: 20`), core add-ons (VPC CNI with prefix delegation), access entry for Jenkins, app namespace | Uses EKS **access entries** (API auth mode) instead of the old `aws-auth` ConfigMap. Whoever runs `apply` becomes cluster admin |
 | `addons.tf` | metrics-server, AWS Load Balancer Controller, Cluster Autoscaler (all Helm), each with its own IRSA role | The LB Controller policy is the official one from the controller repo. Cluster Autoscaler finds the node group through the ASG tags EKS adds automatically. Its version (1.35) matches the cluster |
 | `ecr.tf` | ECR repo with immutable tags, scan-on-push, keeps the newest 20 images | `force_delete` lets `destroy` remove the repo even with images in it |
 | `jenkins.tf` | Jenkins EC2 (AL2023, t3.medium, 30 GB gp3, IMDSv2), IAM role + instance profile, security group | Port 8080 is open only to `jenkins_allowed_cidrs`, with no SSH (use SSM). The role has least-privilege ECR/EKS permissions |
