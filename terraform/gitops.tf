@@ -119,7 +119,7 @@ resource "helm_release" "argocd" {
         app-repo = {
           url      = local.github_repo_url
           type     = "git"
-          username = "x-access-token"
+          username = local.github_owner
         }
       }
     }

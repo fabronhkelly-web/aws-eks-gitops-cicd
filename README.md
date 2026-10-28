@@ -9,7 +9,7 @@ This is the **required GitOps alternative**. It uses the same app, Dockerfile, H
 | AWS credentials | Jenkins EC2 instance role | GitHub **OIDC** → short-lived IAM role. No stored keys |
 | Source of truth for what's running | Last pipeline run | **This branch**: `charts/hello-world/values.yaml` |
 
-**Deployed application URL:** `http://<alb-dns-name>/` *(fill in after deploying, see [step 5](#5-get-the-application-url))*
+**Deployed application URL:** http://k8s-hellowor-hellowor-de6f09c274-774402913.us-east-1.elb.amazonaws.com/ (deployed by Argo CD; `/info` shows the image tag built by GitHub Actions)
 
 ---
 
