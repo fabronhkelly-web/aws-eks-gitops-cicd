@@ -14,6 +14,19 @@ module "eks" {
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
+  # Jenkins runs inside the VPC, so it reaches the API server on its private
+  # endpoint. Allow HTTPS from the Jenkins security group to the control plane.
+  cluster_security_group_additional_rules = {
+    ingress_jenkins_https = {
+      description              = "Jenkins to EKS API"
+      protocol                 = "tcp"
+      from_port                = 443
+      to_port                  = 443
+      type                     = "ingress"
+      source_security_group_id = aws_security_group.jenkins.id
+    }
+  }
+
   cluster_addons = {
     coredns    = {}
     kube-proxy = {}
