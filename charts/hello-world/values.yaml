@@ -3,15 +3,12 @@
 #   * image.tag is committed here by the ci-gitops workflow on every build
 image:
   repository: REPLACE_WITH_ECR_REPOSITORY_URL
-  tag: latest
+  tag: 33620aff9f12
   pullPolicy: IfNotPresent
-
 containerPort: 8080
-
 service:
   type: ClusterIP
   port: 80
-
 # ---------------------------------------------------------------------------
 # Scaling (challenge spec)
 #   * 1 node always on, scalable to 4 (node group, see terraform/eks.tf)
@@ -25,12 +22,10 @@ autoscaling:
   maxReplicas: 12
   targetCPUUtilizationPercentage: 50
   targetMemoryUtilizationPercentage: 50
-
 # Spread replicas evenly across nodes (max difference of 1 pod between nodes).
 topologySpread:
   enabled: true
   maxSkew: 1
-
 # The CPU request is what caps each node at 3 app pods:
 #   t3.small allocatable CPU      ~1930m
 #   DaemonSets (aws-node, kube-proxy) 125m  -> ~1805m free on a fresh node
@@ -47,7 +42,6 @@ resources:
   limits:
     cpu: "1"
     memory: 384Mi
-
 ingress:
   enabled: true
   className: alb
@@ -58,13 +52,11 @@ ingress:
     alb.ingress.kubernetes.io/healthcheck-path: /healthz
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
     alb.ingress.kubernetes.io/healthy-threshold-count: "2"
-
 podSecurityContext:
   runAsNonRoot: true
   runAsUser: 10001
   seccompProfile:
     type: RuntimeDefault
-
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
