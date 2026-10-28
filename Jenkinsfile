@@ -27,7 +27,13 @@ pipeline {
         string(name: 'K8S_NAMESPACE',    defaultValue: 'hello-world',          description: 'Namespace to deploy into')
     }
 
+    // Parameters are copied into the environment explicitly: on a job's first
+    // build Jenkins hasn't registered them yet, so they'd be empty in `sh` steps.
     environment {
+        AWS_REGION       = "${params.AWS_REGION ?: 'us-east-1'}"
+        EKS_CLUSTER_NAME = "${params.EKS_CLUSTER_NAME ?: 'tech-challenge-2-eks'}"
+        ECR_REPOSITORY   = "${params.ECR_REPOSITORY ?: 'hello-world'}"
+        K8S_NAMESPACE    = "${params.K8S_NAMESPACE ?: 'hello-world'}"
         RELEASE_NAME = 'hello-world'
         CHART_DIR    = 'charts/hello-world'
         KUBECONFIG   = "${WORKSPACE}/.kube/config"
