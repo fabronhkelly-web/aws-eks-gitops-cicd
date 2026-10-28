@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and edit. terraform.tfvars is git-ignored.
+
+aws_region   = "us-east-1"
+project_name = "tech-challenge-2"
+
+# Your public IP, so only you can open the Jenkins UI.
+# Find it with: curl -s https://checkip.amazonaws.com
+jenkins_allowed_cidrs = ["203.0.113.10/32"]
+
+# Defaults that already match the challenge spec:
+# node_instance_type = "t3.small"
+# node_min_size      = 1
+# node_max_size      = 4
+# node_desired_size  = 1

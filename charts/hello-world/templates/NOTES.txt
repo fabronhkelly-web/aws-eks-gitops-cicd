@@ -1,0 +1,10 @@
+{{ include "hello-world.fullname" . }} deployed with image {{ .Values.image.repository }}:{{ .Values.image.tag }}
+
+The ALB takes 2-3 minutes to provision on first install. Get its URL with:
+
+  kubectl get ingress {{ include "hello-world.fullname" . }} -n {{ .Release.Namespace }} \
+    -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+
+Watch autoscaling with:
+
+  kubectl get hpa,pods -n {{ .Release.Namespace }} -o wide -w
