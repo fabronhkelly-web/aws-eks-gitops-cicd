@@ -8,7 +8,9 @@ Amazon EKS cluster built with Terraform, and deployed by a Jenkins CI/CD pipelin
 > - `main`: this README. Jenkins pipeline.
 > - `gitops`: the required GitOps alternative. GitHub Actions builds and pushes to ECR, and Argo CD deploys the Helm chart. See that branch's README.
 
-**Deployed application URL:** http://k8s-hellowor-hellowor-de6f09c274-763721802.us-east-1.elb.amazonaws.com/
+**Deployed application URL:** http://k8s-hellowor-hellowor-de6f09c274-774402913.us-east-1.elb.amazonaws.com/
+
+> The Jenkins pipeline on this branch was built, run and verified first (builds #3 and #4 deployed the app; see `docs/screenshots/11`–`30`). The environment was then switched to the required GitOps alternative on the `gitops` branch (GitHub Actions + Argo CD), which now serves the URL above. To run the Jenkins version again, check out `main` and follow the steps below.
 
 ---
 
