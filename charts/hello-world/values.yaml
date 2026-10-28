@@ -1,4 +1,6 @@
-# The pipeline overrides image.repository and image.tag on every deploy.
+# GitOps branch:
+#   * image.repository is supplied by the Argo CD Application (Terraform knows the ECR URL)
+#   * image.tag is committed here by the ci-gitops workflow on every build
 image:
   repository: REPLACE_WITH_ECR_REPOSITORY_URL
   tag: latest

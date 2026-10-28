@@ -20,12 +20,12 @@ output "app_namespace" {
   value = var.app_namespace
 }
 
-output "jenkins_url" {
-  description = "Jenkins UI (allow ~5 minutes after apply for bootstrap to finish)."
-  value       = "http://${aws_instance.jenkins.public_dns}:8080"
+output "github_actions_role_arn" {
+  description = "Set as the AWS_ROLE_ARN repository variable in GitHub."
+  value       = aws_iam_role.github_actions.arn
 }
 
-output "jenkins_instance_id" {
-  description = "Use with SSM: aws ssm start-session --target <id>"
-  value       = aws_instance.jenkins.id
+output "argocd_admin_password_command" {
+  description = "Prints the initial Argo CD admin password."
+  value       = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo"
 }

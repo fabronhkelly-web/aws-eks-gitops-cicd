@@ -5,7 +5,7 @@ module "eks" {
   cluster_name    = local.cluster_name
   cluster_version = var.kubernetes_version
 
-  # Public endpoint so you (and Jenkins) can run kubectl/helm; nodes stay private.
+  # Public endpoint so you can run kubectl/helm; nodes stay private.
   cluster_endpoint_public_access = true
 
   # The identity running `terraform apply` becomes cluster admin.
@@ -63,28 +63,9 @@ module "eks" {
       }]
     }
   }
-
-  # EKS access entries (replace the old aws-auth ConfigMap).
-  # Jenkins gets admin rights scoped to the application namespace only.
-  access_entries = {
-    jenkins = {
-      principal_arn = aws_iam_role.jenkins.arn
-
-      policy_associations = {
-        app_namespace_admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
-          access_scope = {
-            type       = "namespace"
-            namespaces = [var.app_namespace]
-          }
-        }
-      }
-    }
-  }
 }
 
-# Namespace the pipeline deploys into. Created here so the Jenkins role only
-# needs namespace-scoped permissions.
+# Namespace Argo CD deploys the application into.
 resource "kubernetes_namespace" "app" {
   metadata {
     name = var.app_namespace

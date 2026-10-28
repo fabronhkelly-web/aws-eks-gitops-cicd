@@ -1,4 +1,4 @@
-# Two public subnets (ALB + Jenkins) and two private subnets (EKS worker nodes)
+# Two public subnets (ALB) and two private subnets (EKS worker nodes)
 # across two AZs. One NAT gateway keeps cost down for a challenge environment.
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"

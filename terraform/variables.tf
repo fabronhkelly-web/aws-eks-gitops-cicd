@@ -65,20 +65,32 @@ variable "app_namespace" {
 }
 
 # ---------------------------------------------------------------------------
-# Jenkins
+# GitOps (GitHub Actions + Argo CD)
 # ---------------------------------------------------------------------------
-variable "jenkins_instance_type" {
-  description = "Instance type for the Jenkins server (needs room for Docker builds)."
+variable "github_repository" {
+  description = "GitHub repository in owner/name form, e.g. \"octocat/tech-challenge-2\"."
   type        = string
-  default     = "t3.medium"
-}
-
-variable "jenkins_allowed_cidrs" {
-  description = "CIDR blocks allowed to reach the Jenkins UI on port 8080, e.g. [\"203.0.113.10/32\"]."
-  type        = list(string)
 
   validation {
-    condition     = length(var.jenkins_allowed_cidrs) > 0
-    error_message = "Provide at least one CIDR (your public IP as x.x.x.x/32)."
+    condition     = can(regex("^[A-Za-z0-9-]+/[A-Za-z0-9._-]+$", var.github_repository))
+    error_message = "Use the owner/name form, e.g. octocat/tech-challenge-2."
   }
+}
+
+variable "gitops_branch" {
+  description = "Branch GitHub Actions builds from and Argo CD tracks."
+  type        = string
+  default     = "gitops"
+}
+
+variable "github_token" {
+  description = "Fine-grained GitHub token with read-only Contents access, so Argo CD can read the private repo."
+  type        = string
+  sensitive   = true
+}
+
+variable "create_github_oidc_provider" {
+  description = "Set to false if the AWS account already has the token.actions.githubusercontent.com OIDC provider."
+  type        = bool
+  default     = true
 }

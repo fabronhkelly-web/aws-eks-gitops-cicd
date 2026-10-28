@@ -3,9 +3,16 @@
 aws_region   = "us-east-1"
 project_name = "tech-challenge-2"
 
-# Your public IP, so only you can open the Jenkins UI.
-# Find it with: curl -s https://checkip.amazonaws.com
-jenkins_allowed_cidrs = ["203.0.113.10/32"]
+# GitOps settings
+github_repository = "your-github-user/tech-challenge-2"
+gitops_branch     = "gitops"
+
+# Fine-grained token: this repo only, Contents = Read-only. Lets Argo CD read
+# the private repo. Better: export TF_VAR_github_token=... instead of saving it here.
+# github_token = "github_pat_..."
+
+# Set to false if your AWS account already has the GitHub OIDC provider
+# create_github_oidc_provider = true
 
 # Defaults that already match the challenge spec:
 # node_instance_type = "t3.small"

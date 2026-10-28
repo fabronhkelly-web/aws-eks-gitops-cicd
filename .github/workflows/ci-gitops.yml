@@ -1,0 +1,112 @@
+# GitOps CI: test -> build image -> push to ECR -> commit new tag to the Helm chart.
+# Argo CD notices the commit and rolls the new image out to EKS.
+#
+# Repository variables (Settings -> Secrets and variables -> Actions -> Variables):
+#   AWS_ROLE_ARN    terraform output -raw github_actions_role_arn
+#   AWS_REGION      e.g. us-east-1
+#   ECR_REPOSITORY  hello-world
+name: ci-gitops
+
+on:
+  push:
+    branches: [gitops]
+    paths:
+      - "app/**"
+      - ".github/workflows/ci-gitops.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write # push the tag bump back to the branch
+  id-token: write # OIDC token for AWS
+
+concurrency:
+  group: ci-gitops
+  cancel-in-progress: false
+
+env:
+  CHART_VALUES: charts/hello-world/values.yaml
+
+jobs:
+  build-push-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/requirements-dev.txt
+
+      - name: Unit tests
+        working-directory: app
+        run: |
+          pip install -r requirements-dev.txt
+          python -m pytest -q
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Check whether this commit is already in ECR
+        id: exists
+        run: |
+          if aws ecr describe-images --repository-name "${{ vars.ECR_REPOSITORY }}" \
+               --image-ids imageTag="$IMAGE_TAG" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: docker/setup-buildx-action@v3
+        if: steps.exists.outputs.found == 'false'
+
+      - name: Build and push image
+        if: steps.exists.outputs.found == 'false'
+        uses: docker/build-push-action@v6
+        with:
+          context: app
+          push: true
+          build-args: APP_VERSION=${{ env.IMAGE_TAG }}
+          tags: ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Bump image tag in the Helm chart
+        run: |
+          yq -i '.image.tag = strenv(IMAGE_TAG)' "$CHART_VALUES"
+          git diff --stat
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CHART_VALUES"
+          if git diff --cached --quiet; then
+            echo "Tag already set, nothing to commit."
+            exit 0
+          fi
+          git commit -m "deploy: hello-world ${IMAGE_TAG}"
+          # Another run may have pushed meanwhile; replay our one-line change on top
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep 5
+          done
+          exit 1
+
+      - name: Summary
+        run: |
+          {
+            echo "### Released \`${IMAGE_TAG}\`"
+            echo "Image: \`${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}\`"
+            echo "Argo CD will sync it to EKS within about a minute."
+          } >> "$GITHUB_STEP_SUMMARY"
