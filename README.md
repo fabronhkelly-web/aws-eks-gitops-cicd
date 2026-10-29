@@ -1,4 +1,4 @@
-# Tech Challenge 2: GitOps branch (GitHub Actions + Argo CD)
+# AWS EKS GitOps CI/CD: GitHub Actions + Argo CD (gitops branch)
 
 This is the **required GitOps alternative**. It uses the same app, Dockerfile, Helm chart and EKS cluster as `main`. The difference is the CI/CD:
 
@@ -9,7 +9,7 @@ This is the **required GitOps alternative**. It uses the same app, Dockerfile, H
 | AWS credentials | Jenkins EC2 instance role | GitHub **OIDC** → short-lived IAM role. No stored keys |
 | Source of truth for what's running | Last pipeline run | **This branch**: `charts/hello-world/values.yaml` |
 
-**Deployed application URL:** http://k8s-hellowor-hellowor-de6f09c274-774402913.us-east-1.elb.amazonaws.com/ (deployed by Argo CD; `/info` shows the image tag built by GitHub Actions)
+**Status:** deployed and verified on AWS on Oct 28, 2026, then torn down after review to avoid ongoing cost (`terraform destroy`). The full run is documented step by step in [`docs/screenshots`](docs/screenshots): GitHub Actions building and pushing to ECR, Argo CD syncing the Helm chart, and the live app. Everything can be recreated with `terraform apply`.
 
 ---
 
